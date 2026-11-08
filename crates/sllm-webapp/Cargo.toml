@@ -51,7 +51,7 @@ name = "android.permission.ACCESS_NETWORK_STATE"
 [package.metadata.android.application]
 label = "Lumen"
 icon = "@mipmap/ic_launcher"
-theme = "@android:style/Theme.Material.Light.NoActionBar"
+theme = "@style/LumenTheme"
 
 [[package.metadata.android.application.activity]]
 name = ".MainActivity"
