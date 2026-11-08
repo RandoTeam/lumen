@@ -1052,9 +1052,13 @@ function ModelCard({
 function SettingsScreen({
   theme,
   onTheme,
+  settings,
+  onSettings,
 }: {
   theme: ThemePref;
   onTheme: (pref: ThemePref) => void;
+  settings: GenSettings;
+  onSettings: (next: GenSettings) => void;
 }) {
   const [reduced, setReduced] = useState(() => {
     try {
@@ -1086,10 +1090,70 @@ function SettingsScreen({
       </header>
 
       <Group title="Generation">
-        <Row label="Temperature" value="0.70" />
-        <Row label="Top-p" value="0.95" />
-        <Row label="Max tokens" value="512" />
-        <Row label="System prompt" value="Default" />
+        <label class="setting-row">
+          <span>Temperature</span>
+          <input
+            class="setting-input"
+            type="number"
+            min="0"
+            max="2"
+            step="0.05"
+            value={settings.temperature}
+            onInput={(event) =>
+              onSettings({
+                ...settings,
+                temperature: Math.min(2, Math.max(0, Number((event.target as HTMLInputElement).value))),
+              })
+            }
+          />
+        </label>
+        <label class="setting-row">
+          <span>Top-p</span>
+          <input
+            class="setting-input"
+            type="number"
+            min="0.05"
+            max="1"
+            step="0.05"
+            value={settings.topP}
+            onInput={(event) =>
+              onSettings({
+                ...settings,
+                topP: Math.min(1, Math.max(0.05, Number((event.target as HTMLInputElement).value))),
+              })
+            }
+          />
+        </label>
+        <label class="setting-row">
+          <span>Max tokens</span>
+          <input
+            class="setting-input"
+            type="number"
+            min="16"
+            max="8192"
+            step="16"
+            value={settings.maxTokens}
+            onInput={(event) =>
+              onSettings({
+                ...settings,
+                maxTokens: Math.min(8192, Math.max(16, Math.round(Number((event.target as HTMLInputElement).value)))),
+              })
+            }
+          />
+        </label>
+        <label class="setting-row setting-row-prompt">
+          <span>System prompt</span>
+          <textarea
+            class="setting-input setting-prompt"
+            rows={2}
+            value={settings.systemPrompt}
+            placeholder="Default"
+            onInput={(event) =>
+              onSettings({ ...settings, systemPrompt: (event.target as HTMLTextAreaElement).value })
+            }
+          />
+        </label>
+        <p class="group-note">Applied to the next message. No restart needed.</p>
       </Group>
 
       <Group title="Performance">
@@ -1192,6 +1256,33 @@ function Toggle({
   );
 }
 
+interface GenSettings {
+  temperature: number;
+  topP: number;
+  maxTokens: number;
+  systemPrompt: string;
+}
+
+const SETTINGS_KEY = "lumen.settings.v1";
+
+function loadSettings(): GenSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<GenSettings>;
+      return {
+        temperature: Number(parsed.temperature ?? 0.7),
+        topP: Number(parsed.topP ?? 0.95),
+        maxTokens: Number(parsed.maxTokens ?? 512),
+        systemPrompt: String(parsed.systemPrompt ?? ""),
+      };
+    }
+  } catch {
+    // ignore
+  }
+  return { temperature: 0.7, topP: 0.95, maxTokens: 512, systemPrompt: "" };
+}
+
 const CHAT_STORE = "lumen.chats.v1";
 
 interface StoredChats {
@@ -1230,6 +1321,7 @@ export function App() {
   const initial = useMemo(loadChats, []);
   const [section, setSection] = useState<Section>("chats");
   const [theme, setTheme] = useState<ThemePref>(readThemePref);
+  const [settings, setSettings] = useState<GenSettings>(loadSettings);
   const [chatId, setChatId] = useState(initial.chatId);
   const [chatList, setChatList] = useState<Chat[]>(initial.chats);
   const [open, setOpen] = useState(false);
@@ -1262,6 +1354,14 @@ export function App() {
       // Private mode / full storage: keep the session in memory.
     }
   }, [chatList, conversations, chatId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch {
+      // ignore
+    }
+  }, [settings]);
 
   function updateMessages(updater: (prev: Message[]) => Message[]) {
     const id = activeChat.current;
@@ -1454,16 +1554,21 @@ export function App() {
 
       // The engine sees the whole conversation and applies the model's chat
       // template. `modelPath` is absolute and comes from the native registry.
+      const conversation: { role: "user" | "assistant" | "system"; content: string }[] = [
+        ...messages
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .map((m) => ({ role: m.role as "user" | "assistant", content: m.text }))
+          .filter((m) => m.content.trim().length > 0),
+        { role: "user", content: text },
+      ];
+      if (settings.systemPrompt.trim()) {
+        conversation.unshift({ role: "system", content: settings.systemPrompt.trim() });
+      }
       const request = {
-        messages: [
-          ...messages
-            .filter((m) => m.role === "user" || m.role === "assistant")
-            .map((m) => ({ role: m.role, content: m.text }))
-            .filter((m) => m.content.trim().length > 0),
-          { role: "user" as const, content: text },
-        ],
-        maxTokens: 512,
-        temperature: 0.7,
+        messages: conversation,
+        maxTokens: settings.maxTokens,
+        temperature: settings.temperature,
+        topP: settings.topP,
         seed: -1,
         modelId: selected?.id ?? activeModel,
         modelPath: selected?.path,
@@ -1667,7 +1772,7 @@ export function App() {
         )}
 
         {section === "settings" && (
-          <SettingsScreen theme={theme} onTheme={setTheme} />
+          <SettingsScreen theme={theme} onTheme={setTheme} settings={settings} onSettings={setSettings} />
         )}
       </main>
 

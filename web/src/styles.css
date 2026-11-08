@@ -1694,3 +1694,25 @@ button.setting-row:hover {
 .model-adapter span:first-child { color: var(--accent); }
 .model-adapter.is-warn { border-color: var(--warn); }
 .model-adapter.is-warn span:first-child { color: var(--warn); }
+
+.setting-input {
+  width: 92px;
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 500 11px/1 var(--mono);
+  text-align: right;
+}
+.setting-row-prompt { align-items: flex-start; }
+.setting-prompt {
+  width: min(58%, 340px);
+  min-height: 52px;
+  resize: vertical;
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.4;
+}
