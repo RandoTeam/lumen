@@ -52,6 +52,12 @@ memory, quantisation and speed.
 | :---: | :---: | :---: |
 | <img src="docs/screenshots/lumen-chats.png" width="250" /> | <img src="docs/screenshots/lumen-models.png" width="250" /> | <img src="docs/screenshots/lumen-settings.png" width="250" /> |
 
+Hugging Face browser, built into the same Models screen:
+
+<div align="center">
+<img src="docs/screenshots/lumen-hf.png" width="300" alt="Hugging Face GGUF browser" />
+</div>
+
 </div>
 
 Real generation on a Xiaomi MI 8 (Snapdragon 845, 6 GB):
