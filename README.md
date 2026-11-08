@@ -13,7 +13,7 @@ No cloud. No account. No telemetry.
 [![Rust](https://img.shields.io/badge/Rust-1.99-000000?logo=rust)](https://www.rust-lang.org/)
 [![Android](https://img.shields.io/badge/Android-13%2B-3DDC84?logo=android&logoColor=white)](https://www.android.com/)
 [![llama.cpp](https://img.shields.io/badge/llama.cpp-PR%20%2331306-173B31)](https://github.com/ggml-org/llama.cpp/pull/31306)
-[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-245246)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-245246)](LICENSE-MIT)
 [![Beta](https://img.shields.io/badge/release-beta%201-8FCFAD)](https://github.com/RandoTeam/lumen/releases)
 
 [Download beta](https://github.com/RandoTeam/lumen/releases) · [Screenshots](#screenshots) · [Watch the 21 s film](docs/brand/lumen-beta.mp4) · [Build](#build-from-source) · [Roadmap](#roadmap) · [Honest status](#honest-status)

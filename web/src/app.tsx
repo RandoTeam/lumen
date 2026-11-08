@@ -791,7 +791,7 @@ function HuggingFacePanel({ ramGb }: { ramGb: number }) {
           <option value="updated">Updated</option>
           <option value="created">Created</option>
         </select>
-        <button type="submit" class="use-button" disabled={busy}>
+        <button type="button" class="use-button" onClick={run} disabled={busy}>
           {busy ? "Searching…" : "Search"}
         </button>
       </form>

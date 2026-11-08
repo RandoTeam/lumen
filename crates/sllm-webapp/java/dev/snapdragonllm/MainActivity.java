@@ -37,6 +37,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -72,6 +74,8 @@ public class MainActivity extends Activity {
     private volatile Thread hfThread;
     private volatile HttpURLConnection hfConnection;
     private volatile boolean hfCancel;
+    private String debugProxyHost;
+    private int debugProxyPort;
 
     public static native String nativeVersion();
 
@@ -141,6 +145,20 @@ public class MainActivity extends Activity {
         // Normal launches keep debugging off.
         if (getIntent().getBooleanExtra("sllm.debug", false)) {
             WebView.setWebContentsDebuggingEnabled(true);
+        }
+        // Debug-only proxy override for host-side network tests:
+        //   adb shell am start ... --es sllm.proxy 127.0.0.1:8888
+        String proxy = getIntent().getStringExtra("sllm.proxy");
+        if (proxy != null && proxy.contains(":")) {
+            String host = proxy.substring(0, proxy.lastIndexOf(':'));
+            String port = proxy.substring(proxy.lastIndexOf(':') + 1);
+            System.setProperty("http.proxyHost", host);
+            System.setProperty("http.proxyPort", port);
+            System.setProperty("https.proxyHost", host);
+            System.setProperty("https.proxyPort", port);
+            debugProxyHost = host;
+            debugProxyPort = Integer.parseInt(port);
+            Log.i(TAG, "debug proxy " + host + ":" + port);
         }
 
         // adb shell am start -n dev.snapdragonllm/.MainActivity --es smoke 1
@@ -452,7 +470,15 @@ public class MainActivity extends Activity {
 
     private HttpURLConnection hfOpen(String url, String accept, boolean range, long offset)
             throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        URL target = new URL(url);
+        HttpURLConnection connection;
+        if (debugProxyHost != null) {
+            Proxy proxy = new Proxy(
+                    Proxy.Type.HTTP, new InetSocketAddress(debugProxyHost, debugProxyPort));
+            connection = (HttpURLConnection) target.openConnection(proxy);
+        } else {
+            connection = (HttpURLConnection) target.openConnection();
+        }
         connection.setConnectTimeout(20000);
         connection.setReadTimeout(60000);
         connection.setInstanceFollowRedirects(true);
