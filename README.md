@@ -273,8 +273,8 @@ Lumen is a **beta**. These are the things it does not do yet:
 - LiteRT, MTP, DFlash and DSpark are not implemented. The fork contains the
   relevant code, but our FFI does not expose `common_speculative` yet.
 - GPU/NPU backends are not built. The APK is CPU-only.
-- Clover decode on the MI 8 has not been benchmarked end-to-end after the Rust
-  port.
+- Clover on the MI 8 is a single-run measurement (0.7 tok/s); sustained thermal
+  and 10-minute stability are not measured yet.
 - Chat history persists locally; folders, per-chat overrides and attachment search are still in progress.
 
 We would rather show a real error than a fake button. Every engine number in
