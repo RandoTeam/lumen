@@ -1,0 +1,31 @@
+﻿{
+    "exe":  "C:\\VietnAi\\4gbVramStrata\\engine-fourgbvram\\strata-fourgbvram.exe",
+    "args":  [
+                 "--model",
+                 "C:\\VietnAi\\4gbVramStrata-data\\models\\clover-APEX-I-NANOPLUS\\Clover-35B-A3B-Preview.APEX-I-NanoPlus-V2.1.gguf",
+                 "--max-context",
+                 "32768",
+                 "--tail-skip",
+                 "6",
+                 "--no-graphs",
+                 "--expert-profile",
+                 "C:\\VietnAi\\4gbVramStrata-data\\packs\\clover-apex-i-nanoplus\\expert-profile.txt",
+                 "--conversation-cache-mib",
+                 "auto",
+                 "--kv",
+                 "q8_0"
+             ],
+    "cwd":  "C:\\VietnAi\\4gbVramStrata",
+    "tokenizer":  "C:\\VietnAi\\4gbVramStrata-data\\packs\\clover-apex-i-nanoplus\\tokenizer",
+    "model_name":  "clover-35b-a3b-preview-apex-i-nanoplus",
+    "display_name":  "Clover-35B-A3B-Preview APEX-I-NANOPLUS",
+    "log":  "C:\\VietnAi\\4gbVramStrata\\strata-clover-apex-i-nanoplus.log",
+    "lib_dirs":  [
+                     "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.0\\bin",
+                     "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8\\bin",
+                     "C:\\VietnAi\\4gbVramStrata\\.venv\\Lib\\site-packages\\nvidia\\cu13\\bin\\x86_64"
+                 ],
+    "port":  8080,
+    "gpu":  0,
+    "gpus_asked":  true
+}

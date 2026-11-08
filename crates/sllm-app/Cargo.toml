@@ -1,0 +1,52 @@
+[package]
+name = "sllm-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Rust/Slint Android UI for SnapdragonLLM"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "snapdragonllm"
+
+[dependencies]
+log = "0.4"
+sllm-core = { path = "../sllm-core" }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.15"
+slint = { version = "1.18", default-features = false, features = ["compat-1-2", "backend-android-activity-06", "renderer-software", "std"] }
+android-activity = { version = "0.6", features = ["native-activity"] }
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+slint = { version = "1.18", features = ["compat-1-2", "renderer-software", "std"] }
+
+[build-dependencies]
+slint-build = "1.18"
+
+[package.metadata.android]
+use_aapt2 = true
+package = "dev.snapdragonllm"
+apk_name = "snapdragonllm"
+build_targets = ["aarch64-linux-android"]
+strip = "strip"
+
+[package.metadata.android.sdk]
+min_sdk_version = 28
+target_sdk_version = 36
+
+[[package.metadata.android.application.activity]]
+name = "android.app.NativeActivity"
+
+[[package.metadata.android.application.activity.meta_data]]
+name = "android.app.lib_name"
+value = "snapdragonllm"
+
+[[package.metadata.android.application.activity.intent_filter]]
+actions = ["android.intent.action.MAIN"]
+categories = ["android.intent.category.LAUNCHER"]
+
+[package.metadata.android.signing.release]
+path = 'C:\\Users\\Ilia V\\.android\\debug.keystore'
+keystore_password = 'android'

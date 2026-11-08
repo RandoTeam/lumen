@@ -1,0 +1,66 @@
+[package]
+name = "sllm-webapp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "WebView shell for SnapdragonLLM (Rust core + Preact UI)"
+build = "build.rs"
+
+[lib]
+name = "snapdragonllmweb"
+crate-type = ["cdylib"]
+
+[dependencies]
+jni = "0.21"
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sllm-model = { path = "../sllm-model" }
+# The real inference engine. `llama` links the pinned llama.cpp fork into the
+# APK; there is no mock fallback in the app once this is enabled.
+sllm-engine = { path = "../sllm-engine", features = ["llama"] }
+# Real llama.cpp FFI, still used by the on-device smoke test and version code.
+sllm-llama-sys = { path = "../sllm-llama-sys" }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.15"
+
+[package.metadata.android]
+use_aapt2 = true
+package = "dev.snapdragonllm"
+apk_name = "lumen"
+build_targets = ["aarch64-linux-android"]
+strip = "strip"
+java_sources = "java"
+assets = "../../web/dist"
+resources = "res"
+# Rust std and the llama.cpp shim both use the NDK C++ runtime.
+include_cplusplus_shared = true
+
+[package.metadata.android.sdk]
+min_sdk_version = 28
+target_sdk_version = 36
+
+[[package.metadata.android.uses_permission]]
+name = "android.permission.INTERNET"
+
+[[package.metadata.android.uses_permission]]
+name = "android.permission.ACCESS_NETWORK_STATE"
+
+[package.metadata.android.application]
+label = "Lumen"
+icon = "@mipmap/ic_launcher"
+theme = "@android:style/Theme.Material.Light.NoActionBar"
+
+[[package.metadata.android.application.activity]]
+name = ".MainActivity"
+config_changes = "orientation|screenSize|screenLayout|smallestScreenSize|density|uiMode|keyboard|keyboardHidden|navigation"
+
+[[package.metadata.android.application.activity.intent_filter]]
+actions = ["android.intent.action.MAIN"]
+categories = ["android.intent.category.LAUNCHER"]
+
+[package.metadata.android.signing.release]
+path = 'C:\Users\Ilia V\.android\debug.keystore'
+keystore_password = 'android'

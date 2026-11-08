@@ -1,0 +1,636 @@
+import { ScrollView, ListView } from "std-widgets.slint";
+
+global Palette {
+    out property <color> paper: #F7F5EF;
+    out property <color> surface: #FFFFFF;
+    out property <color> surface-2: #EFECE4;
+    out property <color> surface-3: #E6E1D6;
+    out property <color> ink: #1A1B18;
+    out property <color> ink-2: #4E5049;
+    out property <color> ink-3: #6C6E65;
+    out property <color> border: #DCD7CB;
+    out property <color> accent: #2E5D4F;
+    out property <color> accent-soft: #E2ECE7;
+    out property <color> on-accent: #FFFFFF;
+    out property <color> danger: #A33A2B;
+}
+
+export struct ModelItem {
+    name: string,
+    meta: string,
+    size: string,
+    quant: string,
+    status: string,
+    active: bool,
+}
+
+export struct ChatItem {
+    title: string,
+    snippet: string,
+    meta: string,
+}
+
+export struct Message {
+    role: string,
+    text: string,
+    meta: string,
+}
+
+component Icon inherits Path {
+    in property <int> kind: 0;
+    width: 24px;
+    height: 24px;
+    viewbox-width: 24;
+    viewbox-height: 24;
+    stroke: Palette.ink-2;
+    stroke-width: 1.8px;
+    fill: transparent;
+    commands: kind == 0 ? "M 4 5 L 20 5 L 20 17 L 8 17 L 4 21 Z"
+             : kind == 1 ? "M 12 3 L 21 8 L 12 13 L 3 8 Z M 3 12 L 12 17 L 21 12 M 3 16 L 12 21 L 21 16"
+             : kind == 2 ? "M 4 7 L 20 7 M 4 12 L 20 12 M 4 17 L 20 17"
+             : kind == 3 ? "M 3 12 L 7 12 L 9 6 L 13 18 L 16 12 L 21 12"
+             : "M 4 5 L 20 5 L 20 19 L 4 19 Z M 7 9 L 11 12 L 7 15";
+}
+
+component Pill inherits Rectangle {
+    in property <string> label;
+    in property <color> fg: Palette.ink-2;
+    in property <color> bg: Palette.surface-2;
+    height: 26px;
+    border-radius: 13px;
+    background: bg;
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        Text {
+            text: root.label;
+            color: root.fg;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+}
+
+component NavItem inherits Rectangle {
+    in property <string> label;
+    in property <int> icon: 0;
+    in property <bool> active: false;
+    callback clicked();
+    height: 56px;
+    border-radius: 12px;
+    background: active ? Palette.accent-soft : transparent;
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 8px;
+        spacing: 8px;
+        Icon { kind: root.icon; stroke: root.active ? Palette.accent : Palette.ink-2; }
+        Text {
+            text: root.label;
+            color: root.active ? Palette.accent : Palette.ink-2;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+    }
+    TouchArea { clicked => { root.clicked(); } }
+}
+
+component RailItem inherits Rectangle {
+    in property <string> label;
+    in property <int> icon: 0;
+    in property <bool> active: false;
+    callback clicked();
+    width: 88px;
+    height: 64px;
+    background: transparent;
+    Rectangle {
+        x: 0;
+        y: 12px;
+        width: 3px;
+        height: 40px;
+        border-radius: 2px;
+        background: root.active ? Palette.accent : transparent;
+    }
+    VerticalLayout {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        spacing: 4px;
+        Icon { kind: root.icon; stroke: root.active ? Palette.accent : Palette.ink-2; }
+        Text {
+            text: root.label;
+            color: root.active ? Palette.accent : Palette.ink-2;
+            font-size: 10px;
+            horizontal-alignment: center;
+        }
+    }
+    TouchArea { clicked => { root.clicked(); } }
+}
+
+component TopBar inherits Rectangle {
+    in property <string> title;
+    in property <string> subtitle;
+    callback back();
+    height: 64px;
+    background: Palette.paper;
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 12px;
+        Rectangle {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: transparent;
+            Text { text: "‹"; color: Palette.ink; font-size: 28px; horizontal-alignment: center; vertical-alignment: center; }
+            TouchArea { clicked => { root.back(); } }
+        }
+        VerticalLayout {
+            vertical-stretch: 1;
+            spacing: 1px;
+            Text { text: root.title; color: Palette.ink; font-size: 17px; font-weight: 600; vertical-alignment: center; }
+            Text { text: root.subtitle; color: Palette.ink-3; font-size: 11px; }
+        }
+        Rectangle {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: transparent;
+            Text { text: "···"; color: Palette.ink-2; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+        }
+    }
+}
+
+component ChatRow inherits Rectangle {
+    in property <string> title;
+    in property <string> snippet;
+    in property <string> meta;
+    in property <bool> selected: false;
+    callback clicked();
+    height: 76px;
+    background: selected ? Palette.surface-2 : transparent;
+    Rectangle {
+        x: 0;
+        y: 8px;
+        width: 3px;
+        height: 60px;
+        border-radius: 2px;
+        background: selected ? Palette.accent : transparent;
+    }
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 10px;
+        spacing: 3px;
+        Text { text: root.title; color: Palette.ink; font-size: 15px; font-weight: 500; overflow: elide; }
+        Text { text: root.snippet; color: Palette.ink-3; font-size: 12px; overflow: elide; }
+        Text { text: root.meta; color: Palette.ink-3; font-size: 10px; }
+    }
+    TouchArea { clicked => { root.clicked(); } }
+}
+
+component ModelCard inherits Rectangle {
+    in property <string> name;
+    in property <string> meta;
+    in property <string> size;
+    in property <string> quant;
+    in property <string> status;
+    in property <bool> active: false;
+    height: 112px;
+    border-radius: 16px;
+    background: Palette.surface;
+    border-width: 1px;
+    border-color: active ? Palette.accent : Palette.border;
+    VerticalLayout {
+        padding: 16px;
+        spacing: 8px;
+        HorizontalLayout {
+            spacing: 10px;
+            Rectangle {
+                width: 40px;
+                height: 40px;
+                border-radius: 12px;
+                background: Palette.accent-soft;
+                Text { text: "M"; color: Palette.accent; font-size: 16px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+            }
+            VerticalLayout {
+                horizontal-stretch: 1;
+                spacing: 2px;
+                Text { text: root.name; color: Palette.ink; font-size: 16px; font-weight: 600; overflow: elide; }
+                Text { text: root.meta; color: Palette.ink-3; font-size: 12px; overflow: elide; }
+            }
+            Pill { label: root.quant; fg: Palette.accent; bg: Palette.accent-soft; }
+        }
+        HorizontalLayout {
+            spacing: 6px;
+            Pill { label: root.size; }
+            Pill { label: root.status; fg: root.active ? Palette.accent : Palette.ink-3; }
+        }
+    }
+}
+
+component SettingGroup inherits Rectangle {
+    in property <string> title;
+    background: transparent;
+    VerticalLayout {
+        spacing: 8px;
+        Text { text: root.title; color: Palette.ink-3; font-size: 11px; font-weight: 600; }
+        Rectangle {
+            border-radius: 14px;
+            background: Palette.surface;
+            border-width: 1px;
+            border-color: Palette.border;
+            VerticalLayout {
+                padding: 4px;
+                @children
+            }
+        }
+    }
+}
+
+component SettingRow inherits Rectangle {
+    in property <string> label;
+    in property <string> value;
+    height: 48px;
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        Text { text: root.label; color: Palette.ink; font-size: 14px; horizontal-stretch: 1; vertical-alignment: center; }
+        Text { text: root.value; color: Palette.ink-3; font-size: 13px; vertical-alignment: center; }
+    }
+}
+
+component ChatPane inherits Rectangle {
+    in property <string> model-name;
+    in property <[Message]> messages;
+    in property <length> keyboard-height: 0px;
+    in property <length> bottom-inset: 0px;
+    in-out property <string> draft;
+    callback back();
+    callback send();
+    background: Palette.paper;
+    VerticalLayout {
+        TopBar {
+            title: "Clover 35B-A3B";
+            subtitle: root.model-name;
+            back => { root.back(); }
+        }
+        ScrollView {
+            vertical-stretch: 1;
+            VerticalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                spacing: 18px;
+                for msg in root.messages : VerticalLayout {
+                    spacing: 6px;
+                    Text { text: msg.role; color: Palette.ink-3; font-size: 11px; font-weight: 600; }
+                    Text { text: msg.text; color: Palette.ink; font-size: 16px; wrap: word-wrap; }
+                    Text { text: msg.meta; color: Palette.ink-3; font-size: 11px; }
+                }
+            }
+        }
+        Rectangle { height: 1px; background: Palette.border; }
+        HorizontalLayout {
+            height: 56px;
+            padding-left: 20px;
+            padding-right: 20px;
+            spacing: 8px;
+            Rectangle {
+                width: 40px; height: 40px; border-radius: 20px; background: transparent;
+                Text { text: "+"; color: Palette.ink-2; font-size: 22px; horizontal-alignment: center; vertical-alignment: center; }
+            }
+            TextInput {
+                text <=> root.draft;
+                accepted => { root.send(); }
+                color: Palette.ink;
+                font-size: 14px;
+                single-line: true;
+                horizontal-stretch: 1;
+                vertical-alignment: center;
+            }
+            Rectangle {
+                width: 40px; height: 40px; border-radius: 20px; background: Palette.accent;
+                Text { text: "↑"; color: Palette.on-accent; font-size: 20px; horizontal-alignment: center; vertical-alignment: center; }
+                TouchArea { clicked => { root.send(); } }
+            }
+        }
+        Rectangle { height: max(root.bottom-inset, root.keyboard-height); }
+    }
+}
+
+component ChatsList inherits Rectangle {
+    in property <[ChatItem]> chats;
+    callback new-chat();
+    callback picked();
+    background: Palette.paper;
+    VerticalLayout {
+        Rectangle {
+            height: 96px;
+            VerticalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                padding-top: 14px;
+                spacing: 8px;
+                Text { text: "Chats"; color: Palette.ink; font-size: 28px; font-weight: 600; }
+                HorizontalLayout {
+                    spacing: 8px;
+                    Rectangle {
+                        height: 32px;
+                        border-radius: 16px;
+                        background: Palette.surface-2;
+                        horizontal-stretch: 1;
+                        HorizontalLayout {
+                            padding-left: 12px;
+                            Text { text: "Search chats"; color: Palette.ink-3; font-size: 12px; vertical-alignment: center; }
+                        }
+                    }
+                    Rectangle {
+                        width: 32px; height: 32px; border-radius: 16px; background: Palette.accent;
+                        Text { text: "+"; color: Palette.on-accent; font-size: 18px; horizontal-alignment: center; vertical-alignment: center; }
+                        TouchArea { clicked => { root.new-chat(); } }
+                    }
+                }
+            }
+        }
+        HorizontalLayout {
+            padding-left: 20px;
+            padding-top: 8px;
+            padding-bottom: 4px;
+            Text {
+                text: "TODAY";
+                color: Palette.ink-3;
+                font-size: 10px;
+                font-weight: 600;
+            }
+        }
+        for chat in root.chats : ChatRow {
+            title: chat.title;
+            snippet: chat.snippet;
+            meta: chat.meta;
+            selected: false;
+            clicked => { root.picked(); }
+        }
+        Rectangle { vertical-stretch: 1; }
+    }
+}
+
+component ModelsScreen inherits Rectangle {
+    in property <[ModelItem]> models;
+    callback import-model();
+    background: Palette.paper;
+    VerticalLayout {
+        Rectangle {
+            height: 76px;
+            VerticalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                padding-top: 14px;
+                spacing: 4px;
+                Text { text: "Models"; color: Palette.ink; font-size: 28px; font-weight: 600; }
+                Text { text: "Local GGUF · capabilities · memory"; color: Palette.ink-3; font-size: 12px; }
+            }
+        }
+        ScrollView {
+            VerticalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                spacing: 10px;
+                for model in root.models : ModelCard {
+                    name: model.name;
+                    meta: model.meta;
+                    size: model.size;
+                    quant: model.quant;
+                    status: model.status;
+                    active: model.active;
+                }
+                if root.models.length == 0 : Rectangle {
+                    height: 110px;
+                    border-radius: 16px;
+                    background: Palette.surface;
+                    border-width: 1px;
+                    border-color: Palette.border;
+                    VerticalLayout {
+                        padding: 16px;
+                        spacing: 4px;
+                        Text { text: "No models yet"; color: Palette.ink; font-size: 15px; font-weight: 600; }
+                        Text {
+                            text: "Copy GGUF files to Android/data/dev.snapdragonllm/files/models or import them.";
+                            color: Palette.ink-3;
+                            font-size: 12px;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+                Rectangle {
+                    height: 48px;
+                    border-radius: 14px;
+                    border-width: 1px;
+                    border-color: Palette.border;
+                    background: transparent;
+                    Text { text: "Import GGUF"; color: Palette.accent; font-size: 14px; horizontal-alignment: center; vertical-alignment: center; }
+                    TouchArea { clicked => { root.import-model(); } }
+                }
+            }
+        }
+    }
+}
+
+component SettingsScreen inherits Rectangle {
+    background: Palette.paper;
+    VerticalLayout {
+        Rectangle {
+            height: 76px;
+            VerticalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                padding-top: 14px;
+                spacing: 4px;
+                Text { text: "Settings"; color: Palette.ink; font-size: 28px; font-weight: 600; }
+                Text { text: "Generation · performance · storage"; color: Palette.ink-3; font-size: 12px; }
+            }
+        }
+        ScrollView {
+            VerticalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                spacing: 18px;
+                SettingGroup {
+                    title: "GENERATION";
+                    SettingRow { label: "Temperature"; value: "0.70"; }
+                    SettingRow { label: "Top-p"; value: "0.95"; }
+                    SettingRow { label: "Max tokens"; value: "512"; }
+                }
+                SettingGroup {
+                    title: "PERFORMANCE";
+                    SettingRow { label: "Threads"; value: "6"; }
+                    SettingRow { label: "Context"; value: "8192"; }
+                    SettingRow { label: "KV cache"; value: "q8_0"; }
+                }
+                SettingGroup {
+                    title: "APPEARANCE";
+                    SettingRow { label: "Theme"; value: "Paper & Ink"; }
+                }
+                SettingGroup {
+                    title: "PRIVACY";
+                    SettingRow { label: "Telemetry"; value: "Off"; }
+                    SettingRow { label: "Prompt logging"; value: "Off"; }
+                }
+            }
+        }
+    }
+}
+
+component SectionContent inherits Rectangle {
+    in property <int> section;
+    in property <bool> tablet;
+    in property <[ModelItem]> models;
+    in property <[ChatItem]> chats;
+    in property <[Message]> messages;
+    in property <length> keyboard-height: 0px;
+    in property <length> bottom-inset: 0px;
+    in-out property <bool> chat-open;
+    in-out property <string> draft;
+    callback open-chat();
+    callback back();
+    callback send();
+    background: Palette.paper;
+    if section == 0 && tablet : HorizontalLayout {
+        Rectangle {
+            width: 328px;
+            ChatsList {
+                chats: root.chats;
+                picked => { root.open-chat(); }
+                new-chat => { root.open-chat(); }
+            }
+        }
+        Rectangle { width: 1px; background: Palette.border; }
+        ChatPane {
+            model-name: "Qwen2.5 0.5B · 16 GB · 6 threads";
+            messages: root.messages;
+            keyboard-height: root.keyboard-height;
+            bottom-inset: root.bottom-inset;
+            draft <=> root.draft;
+            back => { root.back(); }
+            send => { root.send(); }
+        }
+    }
+    if section == 0 && !tablet : Rectangle {
+        if root.chat-open : ChatPane {
+            model-name: "Qwen2.5 0.5B · 16 GB · 6 threads";
+            messages: root.messages;
+            keyboard-height: root.keyboard-height;
+            bottom-inset: root.bottom-inset;
+            draft <=> root.draft;
+            back => { root.back(); }
+            send => { root.send(); }
+        }
+        if !root.chat-open : ChatsList {
+            chats: root.chats;
+            picked => { root.open-chat(); }
+            new-chat => { root.open-chat(); }
+        }
+    }
+    if section == 1 : ModelsScreen {
+        models: root.models;
+        import-model => {}
+    }
+    if section == 2 : SettingsScreen { }
+}
+
+export component AppWindow inherits Window {
+    callback submitted(string);
+    in-out property <int> section: 0;
+    in-out property <bool> tablet: root.width >= 900px;
+    in-out property <bool> chat-open: false;
+    in-out property <string> draft: "";
+    in property <[ModelItem]> models;
+    in property <[ChatItem]> chats: [
+        { title: "Explain MoE models", snippet: "Five short bullet points about mixture-of-experts…", meta: "Qwen2.5 0.5B · 12:41" },
+        { title: "Kotlin vs Rust rewrite", snippet: "Draft architecture notes for the new app…", meta: "Bonsai Q2_0 · Yesterday" },
+        { title: "Clover 35B on 6 GB", snippet: "Why the model is storage-bound and what to measure…", meta: "Clover 35B · Nov 6" },
+    ];
+    in property <[Message]> messages: [
+        { role: "YOU", text: "Explain how mixture-of-experts models work, in five short bullet points.", meta: "" },
+        { role: "CLOVER 35B", text: "1. A router picks a small set of experts for each token.\n2. Only those experts run, so active compute stays small.\n3. Experts specialize during training, not by hand.\n4. The full model is large, but the active path is cheap.\n5. On a phone the bottleneck is reading experts from storage.", meta: "18.4 tok/s · 5.1 s TTFT · 38% context" },
+    ];
+    title: "SnapdragonLLM";
+    background: Palette.paper;
+    min-width: 360px;
+    min-height: 640px;
+
+    if root.tablet : HorizontalLayout {
+        Rectangle {
+            width: 88px;
+            background: Palette.surface;
+            VerticalLayout {
+                padding-top: root.safe-area-insets.top;
+                padding-bottom: root.safe-area-insets.bottom;
+                spacing: 4px;
+                VerticalLayout {
+                    height: 88px;
+                    spacing: 4px;
+                    Rectangle { width: 32px; height: 32px; border-radius: 10px; background: Palette.accent; }
+                    Text { text: "SLLM"; color: Palette.ink; font-size: 10px; font-weight: 600; horizontal-alignment: center; }
+                }
+                RailItem { label: "Chats"; icon: 0; active: root.section == 0; clicked => { root.section = 0; root.chat-open = false; } }
+                RailItem { label: "Models"; icon: 1; active: root.section == 1; clicked => { root.section = 1; } }
+                RailItem { label: "Settings"; icon: 2; active: root.section == 2; clicked => { root.section = 2; } }
+                Rectangle { vertical-stretch: 1; }
+            }
+        }
+        Rectangle { width: 1px; background: Palette.border; }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            Rectangle { height: root.safe-area-insets.top; }
+            SectionContent {
+                horizontal-stretch: 1;
+                section: root.section;
+                tablet: true;
+                models: root.models;
+                chats: root.chats;
+                messages: root.messages;
+                keyboard-height: root.virtual-keyboard-size.height;
+                bottom-inset: root.safe-area-insets.bottom;
+                chat-open: root.chat-open;
+                draft <=> root.draft;
+                open-chat => { root.chat-open = true; }
+                back => { root.chat-open = false; }
+                send => { root.submitted(root.draft); root.draft = ""; }
+            }
+        }
+    }
+
+    if !root.tablet : VerticalLayout {
+        VerticalLayout {
+            vertical-stretch: 1;
+            Rectangle { height: root.safe-area-insets.top; }
+            SectionContent {
+                vertical-stretch: 1;
+                section: root.section;
+                tablet: false;
+                models: root.models;
+                chats: root.chats;
+                messages: root.messages;
+                keyboard-height: root.virtual-keyboard-size.height;
+                bottom-inset: 0px;
+                chat-open: root.chat-open;
+                draft <=> root.draft;
+                open-chat => { root.chat-open = true; }
+                back => { root.chat-open = false; }
+                send => { root.submitted(root.draft); root.draft = ""; }
+            }
+        }
+        Rectangle { height: 1px; background: Palette.border; }
+        Rectangle {
+            height: 72px + root.safe-area-insets.bottom;
+            background: Palette.surface;
+            HorizontalLayout {
+                padding-bottom: root.safe-area-insets.bottom;
+                NavItem { horizontal-stretch: 1; label: "Chats"; icon: 0; active: root.section == 0; clicked => { root.section = 0; root.chat-open = false; } }
+                NavItem { horizontal-stretch: 1; label: "Models"; icon: 1; active: root.section == 1; clicked => { root.section = 1; } }
+                NavItem { horizontal-stretch: 1; label: "Settings"; icon: 2; active: root.section == 2; clicked => { root.section = 2; } }
+            }
+        }
+    }
+}

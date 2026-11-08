@@ -1,0 +1,28 @@
+# Build output
+/target/
+*.apk
+*.aab
+*.idsig
+
+# Native sources and models are fetched locally; they are not part of the repo.
+/external/
+/models/*
+!/models/README.md
+
+# Web tooling
+/web/node_modules/
+/web/dist/
+
+# Local binaries and secrets
+*.gguf
+*.litertlm
+*.part
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
+
+# Scratch captures
+/docs/design/screens/_tmp_*
+/docs/design/screens/_probe.png

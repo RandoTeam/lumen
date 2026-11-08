@@ -1,0 +1,23 @@
+[package]
+name = "sllm-llama-sys"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT OR Apache-2.0"
+description = "Minimal FFI bindings and C++ shim for the pinned llama.cpp fork used by SnapdragonLLM"
+links = "sllm_llama"
+build = "build.rs"
+publish = false
+
+# Path dependency of `sllm-engine` behind the `llama` feature. Cargo rejects a
+# nested `[workspace]` root inside another workspace, and the repository root is
+# intentionally not edited by the engine integration, so this stays a normal
+# package. It is still only compiled when `sllm-engine` enables `llama`.
+[features]
+default = []
+# Opt-in OpenCL backend (Adreno kernels). Also enabled by SLLM_OPENCL=1.
+opencl = []
+
+[build-dependencies]
+cmake = "0.1"
+bindgen = "0.72"

@@ -1,0 +1,23 @@
+[package]
+name = "sllm-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Inference engine API for SnapdragonLLM"
+
+[dependencies]
+# Pure Rust config/error types; no Android, no llama.cpp.
+sllm-core = { path = "../sllm-core" }
+serde = { version = "1", features = ["derive"] }
+# Optional real backend. The feature is off by default so host tests do not
+# build llama.cpp.
+sllm-llama-sys = { path = "../sllm-llama-sys", optional = true }
+
+[features]
+default = []
+# Build and expose `LlamaEngine` on top of the pinned llama.cpp fork.
+llama = ["dep:sllm-llama-sys"]
+
+[dev-dependencies]
+serde_json = "1"

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <meta name="theme-color" content="#F5F2EA" />
+    <script>
+      (function () {
+        var KEY = "sllm.theme";
+        var pref = "system";
+        var nativeTheme = "";
+        try {
+          pref =
+            (window.Sllm && window.Sllm.themePref && window.Sllm.themePref()) ||
+            localStorage.getItem(KEY) ||
+            "system";
+          nativeTheme =
+            (window.Sllm && window.Sllm.theme && window.Sllm.theme()) || "";
+        } catch (e) {}
+        var dark = matchMedia("(prefers-color-scheme: dark)").matches;
+        var theme =
+          nativeTheme || (pref === "system" ? (dark ? "dark" : "light") : pref);
+        var root = document.documentElement;
+        root.dataset.theme = theme;
+        root.style.colorScheme = theme === "light" ? "light" : "dark";
+        try {
+          root.dataset.motion =
+            localStorage.getItem("sllm.motion") ||
+            (matchMedia("(prefers-reduced-motion: reduce)").matches ? "off" : "on");
+        } catch (e) {}
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) {
+          meta.content = {
+            light: "#F5F2EA",
+            dark: "#1B1C1A",
+            night: "#201C17",
+            amoled: "#000000",
+          }[theme];
+        }
+      })();
+    </script>
+    <title>Lumen</title>
+    <style>
+      #lumen-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: #f5f2ea;
+        color: #171813;
+        transition: opacity 320ms ease, visibility 320ms ease;
+      }
+      html[data-theme="dark"] #lumen-splash { background: #1b1c1a; color: #edeae2; }
+      html[data-theme="night"] #lumen-splash { background: #201c17; color: #f2eadb; }
+      html[data-theme="amoled"] #lumen-splash { background: #000; color: #e8e4da; }
+      #lumen-splash.is-hidden { opacity: 0; visibility: hidden; }
+      .lumen-splash-inner { display: grid; justify-items: center; gap: 18px; }
+      .lumen-splash-mark {
+        width: 76px;
+        height: 76px;
+        border-radius: 22px;
+        background: #173b31;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 18px 40px rgba(23, 59, 49, 0.22);
+        animation: lumen-rise 520ms cubic-bezier(0.2, 0.75, 0.2, 1) both;
+      }
+      .lumen-splash-name {
+        margin: 0;
+        font: 600 13px/1 "Inter", system-ui, sans-serif;
+        letter-spacing: 0.36em;
+        text-transform: uppercase;
+        animation: lumen-rise 520ms 70ms cubic-bezier(0.2, 0.75, 0.2, 1) both;
+      }
+      .lumen-splash-tag {
+        margin: -8px 0 0;
+        font: 400 12px/1 "Inter", system-ui, sans-serif;
+        letter-spacing: 0.02em;
+        opacity: 0.55;
+        animation: lumen-rise 520ms 120ms cubic-bezier(0.2, 0.75, 0.2, 1) both;
+      }
+      @keyframes lumen-rise {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .lumen-splash-mark, .lumen-splash-name, .lumen-splash-tag { animation: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="lumen-splash" aria-hidden="true">
+      <div class="lumen-splash-inner">
+        <svg class="lumen-splash-mark" viewBox="0 0 108 108" role="img" aria-label="Lumen">
+          <rect x="38" y="27" width="10" height="45" rx="5" fill="#F5F2EA" />
+          <rect x="38" y="62" width="33" height="10" rx="5" fill="#F5F2EA" />
+          <circle cx="74" cy="32" r="5" fill="#8FCFAD" />
+        </svg>
+        <p class="lumen-splash-name">Lumen</p>
+        <p class="lumen-splash-tag">local intelligence</p>
+      </div>
+    </div>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
